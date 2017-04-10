@@ -3,7 +3,7 @@
  *
  * Board class methods' implementation.
  *
- * Jeff Amari
+ * Jeff A
  * cs670
  * pa2
  *****************************************************************************/

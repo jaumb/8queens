@@ -6,7 +6,7 @@
  * climbing and simulated annealing to try to find solutions to the 8
  * queens problem.
  *
- * Jeff Amari
+ * Jeff A
  * cs670
  * pa2
  *****************************************************************************/

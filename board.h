@@ -5,7 +5,7 @@
  * The default constuctor generates a random layout of a board with 8
  * queens.
  * 
- * Jeff Amari
+ * Jeff A
  * cs670
  * pa2
  *****************************************************************************/
