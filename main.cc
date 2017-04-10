@@ -18,5 +18,15 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
+  Board b1;
+  Board b2;
+  Board b3;
+  Board b4;
+  Board b5;
+  b1.print();
+  b2.print();
+  b3.print();
+  b4.print();
+  b5.print();
   return 0;
 }

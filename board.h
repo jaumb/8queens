@@ -13,6 +13,8 @@
 #ifndef BOARD_H
 #define BOARD_H
 
+#include <list>
+
 #define NULLPTR 0
 #define N_ROWS 8
 #define N_COLS 8
@@ -27,19 +29,23 @@ class Board
     Board(Board const&); // copy constuctor
     ~Board(); // destructor
     Board& operator=(Board const&); // assignment operator
+    int cost(); // cost of this state
+    std::list<Board> bestNeighbors(); // get list of lowest cost neighbor states
     void print(); // print the board (for debugging)
 
   private:
     // methods
     void initBoard();
-    int row(int);
-    int col(int);
-    int pos(int, int);
+    int row(const int&);
+    int col(const int&);
+    int pos(const int&, const int&);
     void swap(unsigned char&, unsigned char&);
     void shuffle(); // shuffle the board
+    int evaluate(const unsigned char*); // get the cost of this board state
 
     // members
-    unsigned char* board;
+    unsigned char* _board;
+    int _cost;
 
 };
 
