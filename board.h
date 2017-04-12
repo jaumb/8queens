@@ -30,11 +30,12 @@ class Board
     ~Board(); // destructor
     Board& operator=(Board const&); // assignment operator
     int cost(); // cost of this state
-    std::list<Board> bestNeighbors(); // get list of lowest cost neighbor states
+    const std::list<Board>* neighbors(); // get list of all neighbor states
     void print(); // print the board (for debugging)
 
   private:
     // methods
+    Board(const unsigned char* board); // initialize with an array
     void initBoard();
     int row(const int&);
     int col(const int&);
@@ -45,6 +46,7 @@ class Board
 
     // members
     unsigned char* _board;
+    std::list<Board>* _neighbors;
     int _cost;
 
 };

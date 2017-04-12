@@ -24,6 +24,7 @@
 Board::Board()
 {
   _cost = -1;
+  _neighbors = NULLPTR;
   initBoard();
 }
 
@@ -36,6 +37,7 @@ Board::Board(Board const& rhs)
   for (char i = 0; i < N_CELLS; ++i)
     _board[i] = rhs._board[i];
   this->_cost = rhs._cost;
+  this->_neighbors = rhs._neighbors;
 }
 
 /**
@@ -44,6 +46,8 @@ Board::Board(Board const& rhs)
 Board::~Board()
 {
   delete[] _board;
+  if (_neighbors)
+    delete _neighbors;
 }
 
 /**
@@ -56,6 +60,9 @@ Board& Board::operator=(Board const& rhs)
     for (char i = 0; i < N_CELLS; ++i)
       _board[i] = rhs._board[i];
     this->_cost = rhs._cost;
+    if (this->_neighbors)
+      delete this->_neighbors;
+    this->_neighbors = rhs._neighbors;
   }
   return *this;
 }
@@ -73,13 +80,129 @@ int Board::cost()
 }
 
 /**
- * Get a list of this state's lowest cost neighbor states
+ * Get a list of this state's neighbor states
  */
-std::list<Board> Board::bestNeighbors()
+const std::list<Board>* Board::neighbors()
 {
-  std::list<Board> list;
-  // TODO
-  return list;
+  if (_neighbors == NULLPTR)
+  {
+    _neighbors = new std::list<Board>();
+    int i, j, p, prevp, r, c; // index i, index j, position p, row r, column c
+
+    // generate neighbor for every legal move for every queen
+    for (i = 0; i < N_CELLS; ++i)
+    {
+      if (_board[i])
+      {
+        // record row, column, and position
+        r = row(i);
+        c = col(i);
+        p = i;
+
+        // move up as far as possible
+        while (r > 0 && _board[pos(r - 1, c)] != 1)
+        {
+          prevp = p;
+          p = pos(--r, c);
+          swap(_board[prevp], _board[p]);
+          _neighbors->push_back(Board(_board));
+        }
+        swap(_board[p], _board[i]);
+        r = row(i);
+        c = col(i);
+        p = i;
+
+        // move down as far as possible
+        while (r < N_ROWS - 1 && _board[pos(r + 1, c)] != 1)
+        {
+          prevp = p;
+          p = pos(++r, c);
+          swap(_board[prevp], _board[p]);
+          _neighbors->push_back(Board(_board));
+        }
+        swap(_board[p], _board[i]);
+        r = row(i);
+        c = col(i);
+        p = i;
+
+        // move left as far as possible
+        while (c > 0 && _board[pos(r, c - 1)] != 1)
+        {
+          prevp = p;
+          p = pos(r, --c);
+          swap(_board[prevp], _board[p]);
+          _neighbors->push_back(Board(_board));
+        }
+        swap(_board[p], _board[i]);
+        r = row(i);
+        c = col(i);
+        p = i;
+
+        // move right as far as possible
+        while (c < N_COLS - 1 && _board[pos(r, c + 1)] != 1)
+        {
+          prevp = p;
+          p = pos(r, ++c);
+          swap(_board[prevp], _board[p]);
+          _neighbors->push_back(Board(_board));
+        }
+        swap(_board[p], _board[i]);
+        r = row(i);
+        c = col(i);
+        p = i;
+
+        // move up and left as far as possible
+        while (r > 0 && c > 0 && _board[pos(r - 1, c - 1)] != 1)
+        {
+          prevp = p;
+          p = pos(--r, --c);
+          swap(_board[prevp], _board[p]);
+          _neighbors->push_back(Board(_board));
+        }
+        swap(_board[p], _board[i]);
+        r = row(i);
+        c = col(i);
+        p = i;
+
+        // move up and right as far as possible
+        while (r > 0 && c < N_COLS - 1 && _board[pos(r - 1, c + 1)] != 1)
+        {
+          prevp = p;
+          p = pos(--r, ++c);
+          swap(_board[prevp], _board[p]);
+          _neighbors->push_back(Board(_board));
+        }
+        swap(_board[p], _board[i]);
+        r = row(i);
+        c = col(i);
+        p = i;
+
+        // move down and left as far as possible
+        while (r < N_ROWS - 1 && c > 0 && _board[pos(r + 1, c - 1)] != 1)
+        {
+          prevp = p;
+          p = pos(++r, --c);
+          swap(_board[prevp], _board[p]);
+          _neighbors->push_back(Board(_board));
+        }
+        swap(_board[p], _board[i]);
+        r = row(i);
+        c = col(i);
+        p = i;
+
+        // move down and right as far as possible
+        while (r < N_ROWS-1 && c < N_COLS-1 && _board[pos(r + 1, c + 1)] != 1)
+        {
+          prevp = p;
+          p = pos(++r, ++c);
+          swap(_board[prevp], _board[p]);
+          _neighbors->push_back(Board(_board));
+        }
+        swap(_board[p], _board[i]);
+      }
+    }
+  }
+  return _neighbors;
 }
 
 /**
@@ -104,6 +227,20 @@ void Board::print()
 //============================================================================
 //                          Private Methods                                 //
 //============================================================================
+
+
+/*
+ * Create a new board with an array
+ * Restricted to private use only
+ */
+Board::Board(const unsigned char* board)
+{
+  _board = new unsigned char[N_CELLS];
+  for (int i = 0; i < N_CELLS; ++i)
+    _board[i] = board[i];
+  _cost = -1;
+  _neighbors = NULLPTR;
+}
 
 /*
  * Initialize the board
@@ -167,13 +304,14 @@ void Board::shuffle()
 }
 
 /*
+ * This is the h function for calculating the h value of board state.
  * Calculate the cost of this board state by counting the number of pairs
  * of queens endangering each other, directly or indirectly
  */
 int Board::evaluate(const unsigned char* b)
 {
   int currCost = 0;
-  int i, r, c;
+  int i, r, c; // index, row, and column
   unsigned char diag1Counts[2*N_QUEENS - 1];
   unsigned char diag2Counts[2*N_QUEENS - 1];
   unsigned char rowCounts[N_QUEENS];
@@ -207,14 +345,14 @@ int Board::evaluate(const unsigned char* b)
     }
   }
 
-  // get total for rows and cols
+  // get total # of pairs for rows and cols
   for (i = 0; i < N_QUEENS; ++i)
   {
     currCost += (rowCounts[i] * (rowCounts[i] - 1)) / 2;
     currCost += (colCounts[i] * (colCounts[i] - 1)) / 2;
   }
 
-  // get total for both diagonals
+  // get total # of pairs for both diagonals
   for (i = 0; i < 2*N_QUEENS - 1; ++i)
   {
     currCost += (diag1Counts[i] * (diag1Counts[i] - 1)) / 2;
