@@ -29,17 +29,17 @@ class Board
     Board(Board const&); // copy constuctor
     ~Board(); // destructor
     Board& operator=(Board const&); // assignment operator
-    int cost(); // cost of this state
-    const std::list<Board>* neighbors(); // get list of all neighbor states
-    void print(); // print the board (for debugging)
+    int cost() const;
+    const std::list<Board>* successors(); // get list of all successor states
+    void print() const; // print the board (for debugging)
 
   private:
     // methods
     Board(const unsigned char* board); // initialize with an array
     void initBoard();
-    int row(const int&);
-    int col(const int&);
-    int pos(const int&, const int&);
+    int row(const int&) const;
+    int col(const int&) const;
+    int pos(const int&, const int&) const;
     void swap(unsigned char&, unsigned char&);
     void shuffle(); // shuffle the board
     int evaluate(const unsigned char*); // get the cost of this board state

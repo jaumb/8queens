@@ -7,12 +7,13 @@
 ###############################################################################
 
 CC=g++
+OPT=-O3
 
 all: main.cc board.o
-	$(CC) -o main main.cc board.o
+	$(CC) $(OPT) -o main main.cc board.o
 
 board.o: board.h board.cc
-	$(CC) -c -o board.o board.cc
+	$(CC) $(OPT) -c -o board.o board.cc
 
 clean:
 	rm -f *.o main core

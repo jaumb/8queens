@@ -68,28 +68,24 @@ Board& Board::operator=(Board const& rhs)
 }
 
 /**
- * Get the cost of this board state
- * Cost is evaluated by the number of pairs of queens endangering
- * each other, directly or indirectly
+ * Get the cost of this board state (constant member)
  */
-int Board::cost()
+int Board::cost() const
 {
-  if (_cost == -1)
-    _cost = evaluate(_board);
   return _cost;
 }
 
 /**
- * Get a list of this state's neighbor states
+ * Get a list of this state's successor states
  */
-const std::list<Board>* Board::neighbors()
+const std::list<Board>* Board::successors()
 {
   if (_neighbors == NULLPTR)
   {
     _neighbors = new std::list<Board>();
     int i, j, p, prevp, r, c; // index i, index j, position p, row r, column c
 
-    // generate neighbor for every legal move for every queen
+    // generate successor for every legal move for every queen
     for (i = 0; i < N_CELLS; ++i)
     {
       if (_board[i])
@@ -208,7 +204,7 @@ const std::list<Board>* Board::neighbors()
 /**
  * Print the board to stdout (used for debugging)
  */
-void Board::print()
+void Board::print() const
 {
   printf("\nboard address: %p\n", _board);
   for (int i = 0; i < N_ROWS; ++i)
@@ -238,7 +234,7 @@ Board::Board(const unsigned char* board)
   _board = new unsigned char[N_CELLS];
   for (int i = 0; i < N_CELLS; ++i)
     _board[i] = board[i];
-  _cost = -1;
+  _cost = evaluate(_board);
   _neighbors = NULLPTR;
 }
 
@@ -257,12 +253,13 @@ void Board::initBoard()
     _board[i] = 0;
 
   shuffle();
+  _cost = evaluate(_board);
 }
 
 /*
  * Get the row on a 2D board given a position in a 1D array
  */
-int Board::row(const int& pos)
+int Board::row(const int& pos) const
 {
   return pos / N_ROWS;
 }
@@ -270,7 +267,7 @@ int Board::row(const int& pos)
 /*
  * Get the col on a 2D board given a position in a 1D array
  */
-int Board::col(const int& pos)
+int Board::col(const int& pos) const
 {
   return pos % N_ROWS;
 }
@@ -278,7 +275,7 @@ int Board::col(const int& pos)
 /*
  * Get the position in the 1D array given row and column in 2D board
  */
-int Board::pos(const int& row, const int& col)
+int Board::pos(const int& row, const int& col) const
 {
   return row * N_COLS + col;
 }
