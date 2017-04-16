@@ -13,7 +13,7 @@
 #ifndef BOARD_H
 #define BOARD_H
 
-#include <list>
+#include <vector>
 
 #define NULLPTR 0
 #define N_ROWS 8
@@ -30,7 +30,7 @@ class Board
     ~Board(); // destructor
     Board& operator=(Board const&); // assignment operator
     int cost() const;
-    const std::list<Board>* successors(); // get list of all successor states
+    const std::vector<Board>* successors(); // get list of all successor states
     void print() const; // print the board (for debugging)
 
   private:
@@ -46,7 +46,7 @@ class Board
 
     // members
     unsigned char* _board;
-    std::list<Board>* _neighbors;
+    std::vector<Board>* _neighbors;
     int _cost;
 
 };

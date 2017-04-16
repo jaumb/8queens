@@ -37,7 +37,14 @@ Board::Board(Board const& rhs)
   for (char i = 0; i < N_CELLS; ++i)
     _board[i] = rhs._board[i];
   this->_cost = rhs._cost;
-  this->_neighbors = rhs._neighbors;
+  if (rhs._neighbors != NULLPTR) // copy other neighbors
+  {
+    this->_neighbors = new std::vector<Board>(*(rhs._neighbors));
+  }
+  else
+  {
+    this->_neighbors = NULLPTR;
+  }
 }
 
 /**
@@ -46,7 +53,7 @@ Board::Board(Board const& rhs)
 Board::~Board()
 {
   delete[] _board;
-  if (_neighbors)
+  if (_neighbors != NULLPTR)
     delete _neighbors;
 }
 
@@ -57,12 +64,18 @@ Board& Board::operator=(Board const& rhs)
 {
   if (this != &rhs)
   {
-    for (char i = 0; i < N_CELLS; ++i)
+    for (char i = 0; i < N_CELLS; ++i) // copy board
       _board[i] = rhs._board[i];
-    this->_cost = rhs._cost;
-    if (this->_neighbors)
+    if (this->_neighbors != NULLPTR) // free these neighbors
+    {
       delete this->_neighbors;
-    this->_neighbors = rhs._neighbors;
+      this->_neighbors = NULLPTR;
+    }
+    if (rhs._neighbors != NULLPTR) // copy other neighbors
+    {
+      this->_neighbors = new std::vector<Board>(*(rhs._neighbors));
+    }
+    this->_cost = rhs._cost;
   }
   return *this;
 }
@@ -78,17 +91,17 @@ int Board::cost() const
 /**
  * Get a list of this state's successor states
  */
-const std::list<Board>* Board::successors()
+const std::vector<Board>* Board::successors()
 {
   if (_neighbors == NULLPTR)
   {
-    _neighbors = new std::list<Board>();
+    _neighbors = new std::vector<Board>();
     int i, j, p, prevp, r, c; // index i, index j, position p, row r, column c
 
     // generate successor for every legal move for every queen
     for (i = 0; i < N_CELLS; ++i)
     {
-      if (_board[i])
+      if (_board[i] != NULLPTR)
       {
         // record row, column, and position
         r = row(i);
@@ -295,7 +308,6 @@ void Board::swap(unsigned char& a, unsigned char& b)
  */
 void Board::shuffle()
 {
-  srand(reinterpret_cast<size_t>(_board));
   for (int i = N_CELLS - 1; i > 0; --i)
     swap(_board[i], _board[rand() % (i + 1)]);
 }
