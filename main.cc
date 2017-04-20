@@ -23,7 +23,7 @@
 #define N_STARTS 10000UL // 10,000 random starts for both algorithms
 
 #define TEMP_CUTOFF 0.0 // temp precision for simulated annealing
-#define INITIAL_TEMP 0.01 // initial temperature for simulated annealing
+#define INITIAL_TEMP 0.1 // initial temperature for simulated annealing
 #define CONSTANT_K 0.11361 // constant used to calculate acceptance probability
 
 using namespace std;
@@ -110,20 +110,20 @@ int main(int argc, char *argv[])
     while (T > TEMP_CUTOFF && currState.cost() > 0)
     {
       successor = randSuccessor(currState); // get a random successor state
-      deltaE = successor.cost() - currState.cost();
+      deltaE = currState.cost() - successor.cost();
 #ifdef DEBUG
-      if (deltaE > 0)
+      if (deltaE < 0)
         printf("dE: %.2f, T: %.4f, e^(k*dE/T): %.4f\n", deltaE, T, \
                                                           exp(k*-deltaE/T));
 #endif
-      if (deltaE <= 0 || exp(k * -deltaE / T) >
+      if (deltaE >= 0 || exp(k * deltaE / T) >
                                   static_cast<double>(rand())/RAND_MAX)
       {
         currState = successor;
         ++n_moves;
       }
       T = INITIAL_TEMP * pow(0.95, ++n_steps); // calculate temperature
-      //T -= 0.05; // calculate temperature
+      //T -= 0.0005; // calculate temperature
     }
 #ifdef DEBUG
       printf("n_steps: %lu, T: %f", n_steps, T);
