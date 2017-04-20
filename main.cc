@@ -20,32 +20,34 @@
 #include <cmath>
 #include "board.h"
 
-#define N_STARTS 10000 // 10,000 random starts
-#define MAX_STEPS 100 // maximum steps for simulated annealing
+#define N_STARTS 10000 // 10,000 random starts for both algorithms
+
+#define TEMP_PRECISION 1.00 // temp precision for simulated annealing
+#define INITIAL_TEMP 5.0 // initial temperature for simulated annealing
 
 using namespace std;
 
 // forward declarations
 Board leastSuccessor(Board&);
 Board randSuccessor(Board&);
-double temperature(int,int);
 
 int main(int argc, char *argv[])
 {
   int i; // counter
-  int step_count; // count # steps in simulated annealing
+  int n_steps; // step count for simulated annealing
   int n_success = 0; // count # of optimal states reached
   int n_stuck = 0; // count # of times we got stuck at suboptimal state
   int n_moves; // count # of moves for each random start state
   double success_moves_sum = 0; // sum # moves for each successful attempt
   double stuck_moves_sum = 0; // sum # moves for each stuck attempt
-  double T = MAX_STEPS; // temperature
+  double T; // temperature
   double deltaE; // difference between next state and current state
   Board successor; // successor state
 
   // seed the random number generator
   srand(time(NULL));
 
+#ifdef HILL_CLIMBING
   // perform Hill Climbing search
   for (i = 0; i < N_STARTS; ++i) // for each random starting state
   {
@@ -76,10 +78,13 @@ int main(int argc, char *argv[])
     }
   }
   // print Hill Climbing results
+#ifdef DEBUG
   printf("n_success=%d, n_stuck=%d, N_STARTS=%d\n",n_success,n_stuck,N_STARTS);
+#endif
   printf("%.2f%%, %.2f, %.2f\n",100*static_cast<double>(n_success) / N_STARTS,
                       (n_success == 0) ? 0.0 : success_moves_sum / n_success,
                       (n_stuck == 0) ? 0.0 : stuck_moves_sum / n_stuck);
+#endif // end hill climbing
 
   // reset counters for Simulated Annealing
   n_success = 0;
@@ -87,26 +92,39 @@ int main(int argc, char *argv[])
   success_moves_sum = 0;
   stuck_moves_sum = 0;
 
+#ifdef SIMULATED_ANNEALING
   // perform Simulated Annealing search
   for (i = 0; i < N_STARTS; ++i) // for each random starting state
   {
     Board currState; // generate a random start state
-    step_count = 1;
     n_moves = 0;
-    T = 1;
+    n_steps = 0;
+    T = INITIAL_TEMP; // initial temperature
 
-    while (T > 0 && currState.cost() > 0)
+#ifdef DEBUG
+      printf("Trial #%d----------------------------------\n",i);
+#endif
+    while (T > TEMP_PRECISION && currState.cost() > 0)
     {
-      T = temperature(step_count, MAX_STEPS); // calculate temperature
       successor = randSuccessor(currState); // get a random successor state
-      deltaE = successor.cost() - currState.cost();
-      if (deltaE > 0 || exp(deltaE / T) > static_cast<double>(rand())/RAND_MAX)
+      deltaE = currState.cost() - successor.cost();
+#ifdef DEBUG
+      if (deltaE < 0)
+        printf("dE: %.2f, T: %.4f, e^(dE/T): %.4f\n", deltaE, T, \
+                                                          exp(deltaE/T));
+#endif
+      if (deltaE > 0 || exp(deltaE / T) >
+                                  static_cast<double>(rand())/RAND_MAX)
       {
         currState = successor;
         ++n_moves;
       }
-      ++step_count;
+      T = INITIAL_TEMP * pow(0.995, ++n_steps); // calculate temperature
     }
+#ifdef DEBUG
+      printf("n_steps: %d, T: %f", n_steps, T);
+      printf("End Trial #%d------------------------------\n\n",i);
+#endif
 
     // increment success counter if current state is a goal state
     // otherwise increment stuck counter
@@ -122,10 +140,13 @@ int main(int argc, char *argv[])
     }
   }
   // print Simulated Annealing results
+#ifdef DEBUG
   printf("n_success=%d, n_stuck=%d, N_STARTS=%d\n",n_success,n_stuck,N_STARTS);
+#endif
   printf("%.2f%%, %.2f, %.2f\n",100*static_cast<double>(n_success) / N_STARTS,
                       (n_success == 0) ? 0.0 : success_moves_sum / n_success,
                       (n_stuck == 0) ? 0.0 : stuck_moves_sum / n_stuck);
+#endif // end simulated annealing
 
   return 0;
 }
@@ -165,13 +186,4 @@ Board randSuccessor(Board& currState)
 {
   const vector<Board>* vec = currState.successors();
   return vec->at(rand() % vec->size());
-}
-
-/**
- * Helper function to select a random successor of the current board state.
- */
-double temperature(int step_count, int max_steps)
-{
-  double tmp = static_cast<double>(step_count) / max_steps;
-  return 1025 * (1 - tmp);
 }
