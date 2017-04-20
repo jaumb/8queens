@@ -1,0 +1,24 @@
+
+Programming Assignment 2
+Jeff Amari
+cs670
+
+The program is written in C++. The make file assumes g++ is installed on the host computer.
+
+On my desktop computer, it runs in a little under a minute so it may take longer depending on the host machine.
+
+BUILDING and RUNNING:
+$ make
+$ ./main
+
+CLEANING:
+$ make clean
+
+
+Setting explanation for Simulated Annealing:
+
+By and large I chose my settings by experimenting with different values. My main variables consist of the stating temperature for T and the method of calculating the current temperature. After reading a few papers on simulated annealing I settled on calculating T using the formula T = T_0 * (.95)^n where T_0 is the initial temperature and n is the number of steps from the starting board state to the current board state. I also experimented with a fixed value to subtract from T each iteration (i.e. T = T - 0.5, T = T - 0.1, etc...) but these did not perform as well as the other temperature update method.
+
+One of the papers I read suggested introducing a constant k which is calculated once for a particular initial temperature T using the variance of the difference between the current board state and a goal state. Introducing k dramatically improved the performance of my implementation.
+
+I settled on a jump chance of e^(k * -deltaE / T) where deltaE is the difference between the cost of the previous board state and the cost of the current board state. 

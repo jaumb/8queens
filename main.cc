@@ -20,28 +20,31 @@
 #include <cmath>
 #include "board.h"
 
-#define N_STARTS 10000 // 10,000 random starts for both algorithms
+#define N_STARTS 10000UL // 10,000 random starts for both algorithms
 
-#define TEMP_PRECISION 1.00 // temp precision for simulated annealing
-#define INITIAL_TEMP 5.0 // initial temperature for simulated annealing
+#define TEMP_CUTOFF 0.0 // temp precision for simulated annealing
+#define INITIAL_TEMP 0.01 // initial temperature for simulated annealing
+#define CONSTANT_K 0.11361 // constant used to calculate acceptance probability
 
 using namespace std;
 
 // forward declarations
 Board leastSuccessor(Board&);
 Board randSuccessor(Board&);
+double estimateK(void);
 
 int main(int argc, char *argv[])
 {
-  int i; // counter
-  int n_steps; // step count for simulated annealing
-  int n_success = 0; // count # of optimal states reached
-  int n_stuck = 0; // count # of times we got stuck at suboptimal state
-  int n_moves; // count # of moves for each random start state
+  size_t i; // counter
+  size_t n_steps; // step count for simulated annealing
+  size_t n_success = 0; // count # of optimal states reached
+  size_t n_stuck = 0; // count # of times we got stuck at suboptimal state
+  size_t n_moves; // count # of moves for each random start state
   double success_moves_sum = 0; // sum # moves for each successful attempt
   double stuck_moves_sum = 0; // sum # moves for each stuck attempt
   double T; // temperature
   double deltaE; // difference between next state and current state
+  double k = CONSTANT_K; // constant used to calculate acceptance probability
   Board successor; // successor state
 
   // seed the random number generator
@@ -79,9 +82,9 @@ int main(int argc, char *argv[])
   }
   // print Hill Climbing results
 #ifdef DEBUG
-  printf("n_success=%d, n_stuck=%d, N_STARTS=%d\n",n_success,n_stuck,N_STARTS);
+  printf("n_success=%lu, n_stuck=%lu, N_STARTS=%lu\n",n_success,n_stuck,N_STARTS);
 #endif
-  printf("%.2f%%, %.2f, %.2f\n",100*static_cast<double>(n_success) / N_STARTS,
+  printf("%.2f%%,%.2f,%.2f\n",100*static_cast<double>(n_success) / N_STARTS,
                       (n_success == 0) ? 0.0 : success_moves_sum / n_success,
                       (n_stuck == 0) ? 0.0 : stuck_moves_sum / n_stuck);
 #endif // end hill climbing
@@ -102,28 +105,29 @@ int main(int argc, char *argv[])
     T = INITIAL_TEMP; // initial temperature
 
 #ifdef DEBUG
-      printf("Trial #%d----------------------------------\n",i);
+      printf("Trial #%lu----------------------------------\n",i);
 #endif
-    while (T > TEMP_PRECISION && currState.cost() > 0)
+    while (T > TEMP_CUTOFF && currState.cost() > 0)
     {
       successor = randSuccessor(currState); // get a random successor state
-      deltaE = currState.cost() - successor.cost();
+      deltaE = successor.cost() - currState.cost();
 #ifdef DEBUG
-      if (deltaE < 0)
-        printf("dE: %.2f, T: %.4f, e^(dE/T): %.4f\n", deltaE, T, \
-                                                          exp(deltaE/T));
+      if (deltaE > 0)
+        printf("dE: %.2f, T: %.4f, e^(k*dE/T): %.4f\n", deltaE, T, \
+                                                          exp(k*-deltaE/T));
 #endif
-      if (deltaE > 0 || exp(deltaE / T) >
+      if (deltaE <= 0 || exp(k * -deltaE / T) >
                                   static_cast<double>(rand())/RAND_MAX)
       {
         currState = successor;
         ++n_moves;
       }
-      T = INITIAL_TEMP * pow(0.995, ++n_steps); // calculate temperature
+      T = INITIAL_TEMP * pow(0.95, ++n_steps); // calculate temperature
+      //T -= 0.05; // calculate temperature
     }
 #ifdef DEBUG
-      printf("n_steps: %d, T: %f", n_steps, T);
-      printf("End Trial #%d------------------------------\n\n",i);
+      printf("n_steps: %lu, T: %f", n_steps, T);
+      printf("End Trial #%lu------------------------------\n\n",i);
 #endif
 
     // increment success counter if current state is a goal state
@@ -141,9 +145,9 @@ int main(int argc, char *argv[])
   }
   // print Simulated Annealing results
 #ifdef DEBUG
-  printf("n_success=%d, n_stuck=%d, N_STARTS=%d\n",n_success,n_stuck,N_STARTS);
+  printf("n_success=%lu, n_stuck=%lu, N_STARTS=%lu\n",n_success,n_stuck,N_STARTS);
 #endif
-  printf("%.2f%%, %.2f, %.2f\n",100*static_cast<double>(n_success) / N_STARTS,
+  printf("%.2f%%,%.2f,%.2f\n",100*static_cast<double>(n_success) / N_STARTS,
                       (n_success == 0) ? 0.0 : success_moves_sum / n_success,
                       (n_stuck == 0) ? 0.0 : stuck_moves_sum / n_stuck);
 #endif // end simulated annealing
@@ -158,7 +162,7 @@ int main(int argc, char *argv[])
 Board leastSuccessor(Board& currState)
 {
   const vector<Board>* vec = currState.successors();
-  int minVal = numeric_limits<int>::max();
+  size_t minVal = numeric_limits<size_t>::max();
   vector<Board> minSuccessors;
 
   // find successors with lowest value
@@ -187,3 +191,27 @@ Board randSuccessor(Board& currState)
   const vector<Board>* vec = currState.successors();
   return vec->at(rand() % vec->size());
 }
+
+/**
+ * Used to estimate k for different initial temps.
+ * k is a constant used in calculating acceptance probability.
+ */
+double estimateK()
+{
+  size_t Q = 1000;
+  double errorSum = 0;
+  double errorSum2 = 0;
+  Board currState;
+  Board successor;
+
+  for (size_t i = 0; i < Q; ++i)
+  {
+    successor = randSuccessor(currState);
+    errorSum += successor.cost();
+    errorSum2 += pow(successor.cost(), 2);
+  }
+  double varE = 1.0/(Q-1) * errorSum - 1.0/(Q*(Q-1)) * errorSum2;
+  printf("varE: %f\n", varE);
+  return -(INITIAL_TEMP * log(.8) / varE);
+}
+
