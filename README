@@ -1,8 +1,4 @@
 
-Programming Assignment 2
-Jeff Amari
-cs670
-
 The program is written in C++. The make file assumes g++ is installed on the host computer.
 
 On my desktop computer, it runs in a little under a minute so it may take longer depending on the host machine.
